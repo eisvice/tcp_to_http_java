@@ -39,28 +39,24 @@ public class BytesHelper {
         return resultList;
     }
 
-    public static boolean contains(byte[] arr, byte[] sub) {
-        if (sub.length == 0 || sub == null) return true;
+    public static int indexOf(byte[] arr, byte[] sub) {
+        if (sub.length == 0 || sub == null) return 0;
 
-        if (sub.length > arr.length) return false;
+        if (sub.length > arr.length) return -1;
 
         boolean match = false;
-        for (int i = 0; i < arr.length - sub.length; i++) {
-
-            if (arr[i] == sub[0]) {
-                for (int j = 0; j < sub.length; j++) {
-                    if (arr[i+j] != sub[j]) {
-                        match = false;
-                        break;
-                    }
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < sub.length; j++) {
+                if (arr[i+j] != sub[j]) {
+                    match = false;
+                    break;
                 }
                 match = true;
             }
 
-            if (match) break;
-
+            if (match) return i;
         }
 
-        return match;
+        return -1;
     }
 }
