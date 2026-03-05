@@ -1,9 +1,9 @@
 package com.httpfromtcp;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 import com.httpfromtcp.helpers.BytesHelper;
 
@@ -12,25 +12,22 @@ public class Main {
     public static final byte[] br = new byte[]{'\n'};
 
     public static void main(String[] args) {
-        // System.out.println("I hope I get the job!");
-        try (InputStream inputStream = new FileInputStream("messages.txt")) {
-            // ByteArrayOutputStream outputStream = new ByteArrayOutputStream(8);
+        try (
+            InputStream inputStream = new FileInputStream("messages.txt");
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(bufSize);
+        ) {
             byte[] buf = new byte[bufSize];
+            int bytesRead, idx;
 
-            byte[] line = new byte[] {};
-            while (inputStream.read(buf) != -1) {
-                int idx = BytesHelper.indexOf(buf, br);
-                if (idx != -1) {
-                    line = BytesHelper.concatenateByteArrays(
-                        new byte[][]{"read: ".getBytes(), line, Arrays.copyOfRange(buf, 0, idx+1)}
-                    );
-                    System.out.write(line);
-                    System.out.flush();
-
-                    line = Arrays.copyOfRange(buf, idx+1, buf.length);
-                } else {
-                    line = BytesHelper.concatenateByteArrays(new byte[][]{line, buf});
+            while ((bytesRead = inputStream.read(buf)) != -1) {
+                if ((idx = BytesHelper.indexOf(buf, br)) != -1) {
+                    outputStream.write(buf, 0, idx);
+                    System.out.printf("read: %s\n", outputStream.toString());
+                    outputStream.reset();
+                    outputStream.write(buf, idx+1, bytesRead - idx - 1);
+                    continue;
                 }
+                outputStream.write(buf, 0, bytesRead);
             }
         } catch (IOException e) {
             System.out.println(e.getStackTrace());
