@@ -1,8 +1,9 @@
-package com.httpfromtcp;
+package com.httpfromtcp.cmd.tcplistener;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -13,16 +14,33 @@ public class Main {
     public static final int bufSize = 16;
     public static final byte[] br = new byte[]{'\n'};
     public static final String EOF = "___EOF___";
+    public static final int port = 42069;
 
     public static void main(String[] args) {
         try (
-            InputStream inputStream = new FileInputStream("messages.txt");
+            ServerSocket serverSocket = new ServerSocket(port);
         ) {
-            BlockingQueue<String> lines = getLinesChannel(inputStream);
+            System.out.println("+++++++++++++++++");
+            System.out.printf("Start listening on port: %d\n", serverSocket.getLocalPort());
+            System.out.println("+++++++++++++++++");
             while (true) {
-                String line = lines.take();
-                if (line.equals(EOF)) break;
-                System.out.println(line);
+                try (Socket socket = serverSocket.accept()) {
+                    System.out.println("<- Connection has been accepted");
+    
+                    BlockingQueue<String> lines = getLinesChannel(socket.getInputStream());
+                    while (true) {
+                        String line = lines.take();
+                        if (line.equals(EOF)) break;
+                        System.out.println(line);
+                    }
+                } catch (IOException e) {
+                    System.out.printf(
+                        "Error while accepting a connection: %s", 
+                        e.toString()
+                    );
+                } finally {
+                    System.out.println("Connection has been closed ->");
+                }
             }
         } catch (IOException | InterruptedException e) {
             System.out.println(e.getStackTrace());
