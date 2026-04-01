@@ -56,4 +56,10 @@ public class RequestLine {
         }
         this.method = method;
     }
+
+    @Override
+    public String toString() {
+        return "RequestLine [httpVersion=" + httpVersion + ", requestTarget=" + requestTarget + ", method=" + method
+                + "]";
+    }
 }
