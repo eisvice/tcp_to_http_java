@@ -18,7 +18,7 @@ public class RequestTest {
             )
         ));
         assertNotNull(r);
-        assertEquals(r.getRequestLine().getHttpVersion(), "HTTP/1.1");
+        assertEquals(r.getRequestLine().getHttpVersion(), "1.1");
         assertEquals(r.getRequestLine().getMethod(), "GET");
         assertEquals(r.getRequestLine().getRequestTarget(), "/");
 
@@ -30,7 +30,7 @@ public class RequestTest {
             )
         ));
         assertNotNull(r);
-        assertEquals(r.getRequestLine().getHttpVersion(), "HTTP/1.1");
+        assertEquals(r.getRequestLine().getHttpVersion(), "1.1");
         assertEquals(r.getRequestLine().getMethod(), "GET");
         assertEquals(r.getRequestLine().getRequestTarget(), "/coffee");
 
@@ -38,7 +38,7 @@ public class RequestTest {
         String line = "POST /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n";
         r = assertDoesNotThrow(() -> new Request(new ChunkReader(line, line.length())));
         assertNotNull(r);
-        assertEquals(r.getRequestLine().getHttpVersion(), "HTTP/1.1");
+        assertEquals(r.getRequestLine().getHttpVersion(), "1.1");
         assertEquals(r.getRequestLine().getMethod(), "POST");
         assertEquals(r.getRequestLine().getRequestTarget(), "/coffee");
 

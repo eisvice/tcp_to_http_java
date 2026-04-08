@@ -35,7 +35,7 @@ public class RequestLine {
         if (!httpVersion.equals("HTTP/1.1")) {
             throw new IOException("unsupported HTTP version: " + httpVersion);
         }
-        this.httpVersion = httpVersion;
+        this.httpVersion = httpVersion.split("/")[1];
     }
 
     public String getRequestTarget() {

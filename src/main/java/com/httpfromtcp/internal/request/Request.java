@@ -16,13 +16,11 @@ public class Request {
     }
 
     public void requestFromReader(InputStream in) throws IOException {
-        System.out.println("TEST START");
         byte[] buf = new byte[bufferSize];
         int readToIndex = 0;
         setRequestState(RequestState.INITIALIZED);
         try {
             while (getRequestState() != RequestState.DONE) {
-                System.out.println("-");
                 if (readToIndex >= buf.length) {
                     byte[] newBuf = Arrays.copyOf(buf, buf.length * 2);
                     buf = newBuf;
@@ -43,7 +41,6 @@ public class Request {
             throw new IOException("error while parsing a request: " + e.getMessage());
         } finally {
             if (in != null) in.close();
-            System.out.println("TEST END\n\n");
         }
     }
 
@@ -53,7 +50,6 @@ public class Request {
             case INITIALIZED:
                 bytesParsed = parseRequestLine(data);
                 if (bytesParsed > 0) {
-                    System.out.println("parse: " + getRequestLine());
                     setRequestState(RequestState.DONE);
                 }
                 return bytesParsed;
@@ -66,7 +62,6 @@ public class Request {
 
     public int parseRequestLine(byte[] data) throws IOException {
         String dataString = new String(data, 0, data.length, StandardCharsets.UTF_8);
-        System.out.println("parseRequestLine: " + dataString.replaceFirst(CRLF, "\\r\\n"));
         int endOfRequestLine = dataString.indexOf(CRLF);
         if (endOfRequestLine == -1) {
             return 0;
