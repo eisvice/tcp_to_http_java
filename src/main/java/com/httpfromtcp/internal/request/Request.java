@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import com.httpfromtcp.helpers.BytesHelper;
+
 public class Request {
-    public static final String CRLF = "\r\n";
+    public static final byte[] CRLF = {'\r', '\n'};
     public static final int bufferSize = 8;
     private RequestLine requestLine;
     private RequestState requestState;
@@ -61,12 +63,12 @@ public class Request {
     }
 
     public int parseRequestLine(byte[] data) throws IOException {
-        String dataString = new String(data, 0, data.length, StandardCharsets.UTF_8);
-        int endOfRequestLine = dataString.indexOf(CRLF);
+        int endOfRequestLine = BytesHelper.indexOf(data, CRLF);
         if (endOfRequestLine == -1) {
             return 0;
         }
-        setRequestLine(new RequestLine(dataString.substring(0, endOfRequestLine)));
+        String dataString = new String(data, 0, endOfRequestLine, StandardCharsets.UTF_8);
+        setRequestLine(new RequestLine(dataString));
         return endOfRequestLine;
     }
 
