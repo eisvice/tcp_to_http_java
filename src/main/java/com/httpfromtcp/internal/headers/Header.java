@@ -38,8 +38,34 @@ public class Header {
             throw new IOException("invalid header format. spaces after field's name: " + headerLine);
         }
 
-        this.headers.put(fieldName, fieldValue);
+        checkFieldName(fieldName, headerLine);
+        this.setHeader(fieldName, fieldValue);
         return idx + 2;
+    }
+
+    public void checkFieldName(String fieldName, String headerLine) throws IOException {
+        if (!fieldName.equals(fieldName.strip())) {
+            throw new IOException("invalid header format. spaces after field's name: " + headerLine);
+        }
+
+        for (byte c: fieldName.getBytes()) {
+            if (
+                (c < 'A' || c > 'Z') &&
+                (c < 'a' || c > 'z') &&
+                (c < '1' || c > '9') &&
+                !isSpecialChar(c)
+            ) {
+                throw new IOException("invalid characters in the header: " + headerLine);
+            }
+        }
+    }
+
+    public boolean isSpecialChar(byte c) {
+        byte[] specialChars = {'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'};
+        for (byte s: specialChars) {
+            if (c == s) return true;
+        }
+        return false;
     }
 
     public Map<String, String> getHeaders() {
@@ -47,11 +73,11 @@ public class Header {
     }
 
     public void setHeader(String fieldName, String fieldValue) {
-        this.headers.put(fieldName, fieldValue);
+        this.headers.put(fieldName.toLowerCase(), fieldValue);
     }
 
     public String getHeader(String fieldName) {
-        return this.headers.get(fieldName);
+        return this.headers.get(fieldName.toLowerCase());
     }
 
     public boolean isDone() {
