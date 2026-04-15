@@ -73,7 +73,11 @@ public class Header {
     }
 
     public void setHeader(String fieldName, String fieldValue) {
-        this.headers.put(fieldName.toLowerCase(), fieldValue);
+        if (this.getHeader(fieldName) != null) {
+            this.headers.put(fieldName.toLowerCase(), this.getHeader(fieldName) + ", " + fieldValue);
+        } else {
+            this.headers.put(fieldName.toLowerCase(), fieldValue);
+        }
     }
 
     public String getHeader(String fieldName) {

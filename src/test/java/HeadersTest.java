@@ -104,4 +104,17 @@ public class HeadersTest {
         assertEquals(29, n);
         assertFalse(headers.isDone());
     }
+
+    @Test
+    public void TestHeaders_ValidTwoHeaders_WithSameFieldName() {
+        Header headers = new Header();
+        headers.setHeader("Set-Person", "lane-loves-go");
+        byte[] data = "Set-Person: prime-loves-zig\r\nAccept: */*\r\n\r\n".getBytes();
+        
+        int n = assertDoesNotThrow(() -> headers.parse(data));
+        assertNotNull(headers);
+        assertEquals("lane-loves-go, prime-loves-zig", headers.getHeader("Set-Person"));
+        assertEquals(29, n);
+        assertFalse(headers.isDone());
+    }
 }
