@@ -1,5 +1,5 @@
 package com.httpfromtcp.internal.request;
 
 public enum RequestState {
-    INITIALIZED, DONE
+    INITIALIZED, PARSING_HEADERS, DONE
 }

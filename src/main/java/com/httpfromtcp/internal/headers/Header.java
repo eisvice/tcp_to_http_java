@@ -91,4 +91,9 @@ public class Header {
     public void setDone(boolean done) {
         this.done = done;
     }
+
+    @Override
+    public String toString() {
+        return "Header [headers=" + headers + "]";
+    }
 }

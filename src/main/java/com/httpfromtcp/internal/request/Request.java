@@ -6,11 +6,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import com.httpfromtcp.helpers.BytesHelper;
+import com.httpfromtcp.internal.headers.Header;
 
 public class Request {
     public static final byte[] CRLF = {'\r', '\n'};
     public static final int bufferSize = 8;
     private RequestLine requestLine;
+    private Header requestHeaders;
     private RequestState requestState;
 
     public Request (InputStream in) throws IOException {
@@ -21,13 +23,17 @@ public class Request {
         byte[] buf = new byte[bufferSize];
         int readToIndex = 0;
         setRequestState(RequestState.INITIALIZED);
+        setRequestHeaders(new Header());
         try {
             while (getRequestState() != RequestState.DONE) {
                 if (readToIndex >= buf.length) {
                     byte[] newBuf = Arrays.copyOf(buf, buf.length * 2);
                     buf = newBuf;
                 }
-
+                if (buf.length == 0) {
+                    buf = new byte[bufferSize];
+                }
+                
                 int bytesRead = in.read(buf, readToIndex, buf.length - readToIndex);
                 if (bytesRead == -1) {
                     setRequestState(RequestState.DONE);
@@ -47,11 +53,30 @@ public class Request {
     }
 
     public int parse(byte[] data) throws IOException {
+        int totalBytesParsed = 0;
+        while (this.getRequestState() != RequestState.DONE) {
+            int bytesParsed = parseSingle(Arrays.copyOfRange(data, totalBytesParsed, data.length));
+            totalBytesParsed += bytesParsed;
+            if (bytesParsed == 0) {
+                break;
+            }
+        }
+
+        return totalBytesParsed;
+    }
+    
+    public int parseSingle(byte[] data) throws IOException {
         int bytesParsed = 0;
         switch (getRequestState()) {
             case INITIALIZED:
                 bytesParsed = parseRequestLine(data);
                 if (bytesParsed > 0) {
+                    setRequestState(RequestState.PARSING_HEADERS);
+                }
+                return bytesParsed;
+            case PARSING_HEADERS:
+                bytesParsed = getRequestHeaders().parse(data);
+                if (getRequestHeaders().isDone()) {
                     setRequestState(RequestState.DONE);
                 }
                 return bytesParsed;
@@ -69,7 +94,7 @@ public class Request {
         }
         String dataString = new String(data, 0, endOfRequestLine, StandardCharsets.UTF_8);
         setRequestLine(new RequestLine(dataString));
-        return endOfRequestLine;
+        return endOfRequestLine + 2;
     }
 
     public RequestLine getRequestLine() {
@@ -86,5 +111,13 @@ public class Request {
 
     public void setRequestState(RequestState requestState) {
         this.requestState = requestState;
+    }
+
+    public Header getRequestHeaders() {
+        return requestHeaders;
+    }
+
+    public void setRequestHeaders(Header requestHeaders) {
+        this.requestHeaders = requestHeaders;
     }
 }
