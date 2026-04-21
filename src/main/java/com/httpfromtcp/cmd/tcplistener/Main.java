@@ -34,7 +34,10 @@ public class Main {
                         request.getRequestLine().getRequestTarget(),
                         request.getRequestLine().getHttpVersion()
                     );
-
+                    System.out.println("Headers:");
+                    for (String key: request.getRequestHeaders().getHeaders().keySet()) {
+                        System.out.printf("- %s: %s\n", key, request.getRequestHeaders().getHeader(key));
+                    }
                 } catch (IOException e) {
                     System.out.printf(
                         "Error while accepting a connection: %s", 
