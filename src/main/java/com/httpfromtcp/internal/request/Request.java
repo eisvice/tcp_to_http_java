@@ -30,19 +30,24 @@ public class Request {
                     byte[] newBuf = Arrays.copyOf(buf, buf.length * 2);
                     buf = newBuf;
                 }
-                if (buf.length == 0) {
-                    buf = new byte[bufferSize];
-                }
                 
                 int bytesRead = in.read(buf, readToIndex, buf.length - readToIndex);
                 if (bytesRead == -1) {
-                    setRequestState(RequestState.DONE);
+                    if (getRequestState() != RequestState.DONE) {
+                        throw new IOException(
+                            String.format(
+                                "incomplete request, in state: %s, read n bytes on EOF: %d", 
+                                getRequestState(),
+                                bytesRead
+                            )
+                        );
+                    }
                     break;
                 }
 
                 readToIndex += bytesRead;
                 int bytesParsed = parse(Arrays.copyOfRange(buf, 0, readToIndex));
-                buf = Arrays.copyOfRange(buf, bytesParsed, buf.length);
+                buf = BytesHelper.copy(buf, Arrays.copyOfRange(buf, bytesParsed, buf.length));
                 readToIndex -= bytesParsed;
             }
         } catch (IOException e) {

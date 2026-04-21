@@ -59,4 +59,12 @@ public class BytesHelper {
 
         return -1;
     }
+
+    public static byte[] copy(byte[] dst, byte[] src) {
+        int len = Math.min(dst.length, src.length);
+        for (int i = 0; i < len; i++) {
+            dst[i] = src[i];
+        }
+        return dst;
+    }
 }
