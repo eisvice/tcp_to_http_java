@@ -1,6 +1,7 @@
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
@@ -150,5 +151,82 @@ public class RequestTest {
                 3
             )
         ));
+    }
+
+    @Test
+    public void TestBody_StandardBody() {
+        Request r = assertDoesNotThrow(() -> new Request(
+            new ChunkReader(
+                "POST /submit HTTP/1.1\r\n" +
+                    "Host: localhost:42069\r\n" +
+                    "Content-Length: 16\r\n" +
+                    "\r\n" +
+                    "hello world!!!!\n", 
+                3
+            )
+        ));
+        assertNotNull(r);
+        assertEquals(
+            "hello world!!!!\n",
+            new String(r.getRequestBody(), StandardCharsets.UTF_8)
+        );
+    }
+
+    @Test
+    public void TestBody_ContentLengthZero() {
+        Request r = assertDoesNotThrow(() -> new Request(
+            new ChunkReader(
+                "POST /submit HTTP/1.1\r\n" +
+                    "Host: localhost:42069\r\n" +
+                    "Content-Length: 0\r\n" +
+                    "\r\n", 
+                3
+            )
+        ));
+        assertNotNull(r);
+        assertNotNull(r.getRequestBody());
+    }
+
+    @Test
+    public void TestBody_NoBodyNoContentLenth() {
+        Request r = assertDoesNotThrow(() -> new Request(
+            new ChunkReader(
+                "POST /submit HTTP/1.1\r\n" +
+                    "Host: localhost:42069\r\n" +
+                    "\r\n", 
+                3
+            )
+        ));
+        assertNotNull(r);
+        assertNull(r.getRequestBody());
+    }
+
+    @Test
+    public void TestBody_BodyShorterThanCLength() {
+        assertThrows(IOException.class, () -> new Request(
+            new ChunkReader(
+                "POST /submit HTTP/1.1\r\n" +
+                    "Host: localhost:42069\r\n" +
+                    "Content-Length: 12\r\n" +
+                    "\r\n" +
+                    "hello world!\n", 
+                3
+            )
+        ));
+    }
+
+    @Test
+    public void TestBody_NoContentLengthBodyExists() {
+        Request r = assertDoesNotThrow(() -> new Request(
+            new ChunkReader(
+                "POST /submit HTTP/1.1\r\n" +
+                    "Host: localhost:42069\r\n" +
+                    "\r\n" +
+                    "hello world!\n", 
+                3
+            )
+        ));
+        assertNotNull(r);
+        assertNull(r.getRequestBody());
     }
 }

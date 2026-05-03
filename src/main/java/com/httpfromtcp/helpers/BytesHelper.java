@@ -10,6 +10,7 @@ public class BytesHelper {
         int arrLength = 0;
         for (int i = 0; i < args.length; i++) {
             // System.out.printf("arg[%d] length: %d\n", i, args[i].length);
+            if (args[i] == null) continue;
             arrLength += args[i].length;
         }
         // System.out.printf("array length: %d\n", arrLength);
@@ -18,6 +19,7 @@ public class BytesHelper {
 
         int currentIndex = 0;
         for (int i = 0; i < args.length; i++) {
+            if (args[i] == null) continue;
             for (int j = 0; j < args[i].length; j++) {
                 resultByteArr[currentIndex] = args[i][j];
                 currentIndex++;

@@ -13,6 +13,7 @@ public class Request {
     public static final int bufferSize = 8;
     private RequestLine requestLine;
     private Header requestHeaders;
+    private byte[] requestBody;
     private RequestState requestState;
 
     public Request (InputStream in) throws IOException {
@@ -82,8 +83,20 @@ public class Request {
             case PARSING_HEADERS:
                 bytesParsed = getRequestHeaders().parse(data);
                 if (getRequestHeaders().isDone()) {
-                    setRequestState(RequestState.DONE);
+                    setRequestState(RequestState.PARSING_BODY);
                 }
+                return bytesParsed;
+            case PARSING_BODY:
+                String contentLengthStr = getRequestHeaders().getHeader("content-length");
+                if (contentLengthStr == null) {
+                    setRequestState(RequestState.DONE);
+                    return 0;
+                }
+                if (getRequestBody() == null) {
+                    setRequestBody(new byte[]{});
+                }
+                int contentLength = Integer.parseInt(contentLengthStr);
+                bytesParsed = parseBody(data, contentLength);
                 return bytesParsed;
             case DONE:
                 throw new IOException("error: trying to read data in a done state");
@@ -100,6 +113,21 @@ public class Request {
         String dataString = new String(data, 0, endOfRequestLine, StandardCharsets.UTF_8);
         setRequestLine(new RequestLine(dataString));
         return endOfRequestLine + 2;
+    }
+
+    public int parseBody(byte[] data, int contentLength) throws IOException {
+        if (data.length == 0) {
+            if (getRequestBody().length > contentLength) {
+                throw new IOException("body length is greater than Content-Length: " + getRequestBody().toString());
+            }
+            if (getRequestBody().length == contentLength) {
+                setRequestState(RequestState.DONE);
+            }
+            return 0;
+        }
+
+        addToRequestBody(data);
+        return data.length;
     }
 
     public RequestLine getRequestLine() {
@@ -124,5 +152,18 @@ public class Request {
 
     public void setRequestHeaders(Header requestHeaders) {
         this.requestHeaders = requestHeaders;
+    }
+
+    public byte[] getRequestBody() {
+        return this.requestBody;
+    }
+
+    public void setRequestBody(byte[] requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    public void addToRequestBody(byte[] data) {
+        byte[] body = BytesHelper.concatenateByteArrays(new byte[][]{getRequestBody(), data});
+        setRequestBody(body);
     }
 }
