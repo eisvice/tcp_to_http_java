@@ -162,7 +162,7 @@ public class RequestTest {
                     "Content-Length: 16\r\n" +
                     "\r\n" +
                     "hello world!!!!\n", 
-                3
+                1024
             )
         ));
         assertNotNull(r);
