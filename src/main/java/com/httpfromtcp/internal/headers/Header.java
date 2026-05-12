@@ -94,6 +94,11 @@ public class Header {
 
     @Override
     public String toString() {
-        return "Header [headers=" + headers + "]";
+        StringBuilder builder = new StringBuilder();
+        headers.keySet().forEach(
+            (h) -> builder.append(String.format("%s: %s\r\n", h, getHeader(h)))
+        );
+        builder.append("\r\n");
+        return builder.toString();
     }
 }
