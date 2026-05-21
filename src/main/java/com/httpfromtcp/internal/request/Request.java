@@ -53,8 +53,6 @@ public class Request {
             }
         } catch (IOException e) {
             throw new IOException("error while parsing a request: " + e.getMessage());
-        } finally {
-            if (in != null) in.close();
         }
     }
 

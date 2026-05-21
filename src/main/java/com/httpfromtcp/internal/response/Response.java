@@ -7,21 +7,15 @@ import com.httpfromtcp.internal.headers.Header;
 
 public class Response {
     private String statusLine;
-    private Header headers;
-    private final OutputStream stream;
+    private Header headers = new Header();
 
-    public Response(OutputStream stream) {
-        this.headers = new Header();
-        this.stream = stream;
-    }
-
-    public void writeStatusLine(StatusCode code) throws IOException {
+    public void writeStatusLine(StatusCode code, OutputStream oStream) throws IOException {
         this.statusLine = String.format(
             "HTTP/1.1 %d %s\r\n", 
             code.getCode(), 
             code.getReasonPhrase()
         );
-        stream.write(this.statusLine.getBytes());
+        oStream.write(this.statusLine.getBytes());
     }
 
     public void setDefaultHeaders(int contentLen) {
@@ -30,7 +24,12 @@ public class Response {
         headers.setHeader("Content-Type", "text/plain");
     }
 
-    public void writeHeaders() throws IOException {
-        stream.write(headers.toString().getBytes());
+    public void writeHeaders(OutputStream oStream) throws IOException {
+        oStream.write(headers.toString().getBytes());
+    }
+
+    public void writeBody(String body, OutputStream oStream) throws IOException {
+        // body = body + "\r\n";
+        oStream.write(body.getBytes());
     }
 }
