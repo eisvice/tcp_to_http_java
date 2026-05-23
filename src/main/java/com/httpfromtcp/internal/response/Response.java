@@ -24,6 +24,14 @@ public class Response {
         headers.setHeader("Content-Type", "text/plain");
     }
 
+    public Header getHeaders() {
+        return this.headers;
+    }
+
+    public void setHeaders(Header headers) {
+        this.headers = headers;
+    }
+
     public void writeHeaders(OutputStream oStream) throws IOException {
         oStream.write(headers.toString().getBytes());
     }

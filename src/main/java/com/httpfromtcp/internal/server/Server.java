@@ -1,6 +1,6 @@
 package com.httpfromtcp.internal.server;
 
-import java.io.ByteArrayOutputStream;
+// import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,15 +9,15 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 import com.httpfromtcp.internal.request.Request;
-import com.httpfromtcp.internal.response.Response;
+// import com.httpfromtcp.internal.response.Response;
 import com.httpfromtcp.internal.response.StatusCode;
 
 public class Server implements AutoCloseable {
     private final ServerSocket socket;
-    private BiFunction<OutputStream, Request, HandlerError> handler;
+    private BiConsumer<Writer, Request> handler;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -25,7 +25,7 @@ public class Server implements AutoCloseable {
         this.socket = new ServerSocket(port);
     }
 
-    public void serve(BiFunction<OutputStream, Request, HandlerError> handler) {
+    public void serve(BiConsumer<Writer, Request> handler) {
         this.handler = handler;
         Thread thread = new Thread(this::listen);
         thread.start();
@@ -57,19 +57,14 @@ public class Server implements AutoCloseable {
             InputStream iStream = clientSocket.getInputStream();
         ) {
             Request request = new Request(iStream);
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            HandlerError hError = this.handler.apply(buf, request);
-            if (hError != null) {
-                hError.write(oStream);
-                oStream.flush();
-                return;
-            }
-            Response resp = new Response();
-            resp.writeStatusLine(StatusCode.StatusOk, oStream);
-            resp.setDefaultHeaders(buf.toByteArray().length);
-            resp.writeHeaders(oStream);
-            oStream.write(buf.toByteArray());
-            oStream.flush();
+            Writer writer = new Writer(oStream);
+            this.handler.accept(writer, request);
+            // Response resp = new Response();
+            // resp.writeStatusLine(StatusCode.StatusOk, oStream);
+            // resp.setDefaultHeaders(buf.toByteArray().length);
+            // resp.writeHeaders(oStream);
+            // oStream.write(buf.toByteArray());
+            // oStream.flush();
         } catch (IOException e) {
             System.out.println("Handle func exception: " + e.getMessage());
             try (OutputStream oStream = clientSocket.getOutputStream()) {

@@ -3,9 +3,11 @@ package com.httpfromtcp.cmd.httpserver;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
+import com.httpfromtcp.internal.headers.Header;
 import com.httpfromtcp.internal.response.StatusCode;
-import com.httpfromtcp.internal.server.HandlerError;
+// import com.httpfromtcp.internal.server.HandlerError;
 import com.httpfromtcp.internal.server.Server;
+// import com.httpfromtcp.internal.server.Writer;
 
 public class Main {
     public static final int port = 42069;
@@ -16,20 +18,62 @@ public class Main {
         try(Server server = new Server(port)) {
             System.out.println("Server started on port: " + port);
             server.serve(
-                (oStream, request) -> {
-                    System.out.println(request.getRequestLine().getRequestTarget());
-                    if (request.getRequestLine().getRequestTarget().equals("/yourproblem")) {
-                        return new HandlerError(StatusCode.StatusBadRequest, "Your problem is not my problem\n");
-                    }
-                    if (request.getRequestLine().getRequestTarget().equals("/myproblem")) {
-                        return new HandlerError(StatusCode.StatusInternalError, "Woopsie, my bad\n");
-                    }
+                (writer, request) -> {
+                    Header headers = new Header();
+                    headers.setHeader("Connection", "close");
+                    headers.setHeader("Content-Type", "text/html");
                     try {
-                        oStream.write("All good, frfr\n".getBytes());
-                    } catch (IOException exception) {
-                        System.err.println(exception.getMessage());
+                        if (request.getRequestLine().getRequestTarget().equals("/yourproblem")) {
+                            byte[] responseBody = """
+<html>
+  <head>
+    <title>400 Bad Request</title>
+  </head>
+  <body>
+    <h1>Bad Request</h1>
+    <p>Your request honestly kinda sucked.</p>
+  </body>
+</html>""".getBytes();
+                            
+                            headers.setHeader("Content-Length", String.valueOf(responseBody.length));
+                            writer.writeStatusLine(StatusCode.StatusBadRequest);
+                            writer.writeHeaders(headers);
+                            writer.writeBody(responseBody);
+                        }
+                        if (request.getRequestLine().getRequestTarget().equals("/myproblem")) {
+                            byte[] responseBody = """
+<html>
+  <head>
+    <title>500 Internal Server Error</title>
+  </head>
+  <body>
+    <h1>Internal Server Error</h1>
+    <p>Okay, you know what? This one is on me.</p>
+  </body>
+</html>""".getBytes();
+                            headers.setHeader("Content-Length", String.valueOf(responseBody.length));
+                            writer.writeStatusLine(StatusCode.StatusInternalError);
+                            writer.writeHeaders(headers);
+                            writer.writeBody(responseBody);
+                        }
+    
+                        byte[] responseBody = """
+<html>
+  <head>
+    <title>200 OK</title>
+  </head>
+  <body>
+    <h1>Success!</h1>
+    <p>Your request was an absolute banger.</p>
+  </body>
+</html>""".getBytes();
+                        headers.setHeader("Content-Length", String.valueOf(responseBody.length));
+                        writer.writeStatusLine(StatusCode.StatusOk);
+                        writer.writeHeaders(headers);
+                        writer.writeBody(responseBody);
+                    } catch (IOException e) {
+                        System.out.println("Error while writing a response: " + e.getMessage());
                     }
-                    return null;
                 }
             );
 
