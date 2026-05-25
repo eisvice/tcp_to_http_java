@@ -37,7 +37,6 @@ public class Response {
     }
 
     public void writeBody(String body, OutputStream oStream) throws IOException {
-        // body = body + "\r\n";
         oStream.write(body.getBytes());
     }
 }

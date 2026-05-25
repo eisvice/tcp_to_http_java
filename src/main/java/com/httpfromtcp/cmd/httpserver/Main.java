@@ -1,13 +1,15 @@
 package com.httpfromtcp.cmd.httpserver;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.concurrent.CountDownLatch;
 
 import com.httpfromtcp.internal.headers.Header;
 import com.httpfromtcp.internal.response.StatusCode;
-// import com.httpfromtcp.internal.server.HandlerError;
 import com.httpfromtcp.internal.server.Server;
-// import com.httpfromtcp.internal.server.Writer;
 
 public class Main {
     public static final int port = 42069;
@@ -55,6 +57,20 @@ public class Main {
                             writer.writeStatusLine(StatusCode.StatusInternalError);
                             writer.writeHeaders(headers);
                             writer.writeBody(responseBody);
+                        }
+
+                        if (request.getRequestLine().getRequestTarget().contains("/httpbin/")) {
+                          String httpbinPath = request.getRequestLine().getRequestTarget().substring("/httpbin/".length());
+                          HttpClient client = HttpClient.newHttpClient();
+                          HttpRequest proxyRequest = HttpRequest.newBuilder()
+                                                  .uri(URI.create("https://httpbin.org/" + httpbinPath))
+                                                  .build();
+                          try {
+                            byte[] clientBody = client.send(proxyRequest, BodyHandlers.ofByteArray()).body();
+                            writer.writeChunkedBody(clientBody);
+                          } catch (InterruptedException e) {
+                            System.out.println(e.getMessage());
+                          }
                         }
     
                         byte[] responseBody = """

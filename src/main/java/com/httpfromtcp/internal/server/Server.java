@@ -1,6 +1,5 @@
 package com.httpfromtcp.internal.server;
 
-// import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import com.httpfromtcp.internal.request.Request;
-// import com.httpfromtcp.internal.response.Response;
 import com.httpfromtcp.internal.response.StatusCode;
 
 public class Server implements AutoCloseable {
@@ -59,12 +57,6 @@ public class Server implements AutoCloseable {
             Request request = new Request(iStream);
             Writer writer = new Writer(oStream);
             this.handler.accept(writer, request);
-            // Response resp = new Response();
-            // resp.writeStatusLine(StatusCode.StatusOk, oStream);
-            // resp.setDefaultHeaders(buf.toByteArray().length);
-            // resp.writeHeaders(oStream);
-            // oStream.write(buf.toByteArray());
-            // oStream.flush();
         } catch (IOException e) {
             System.out.println("Handle func exception: " + e.getMessage());
             try (OutputStream oStream = clientSocket.getOutputStream()) {

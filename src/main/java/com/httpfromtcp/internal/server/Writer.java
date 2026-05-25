@@ -3,6 +3,7 @@ package com.httpfromtcp.internal.server;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.httpfromtcp.helpers.BytesHelper;
 import com.httpfromtcp.internal.headers.Header;
 import com.httpfromtcp.internal.response.Response;
 import com.httpfromtcp.internal.response.StatusCode;
@@ -42,5 +43,23 @@ public class Writer {
         this.state = WriterState.WriteBody;
         this.response.writeBody(new String(p), oStream);
         return p.length;
+    }
+
+    public int writeChunkedBody(byte[] p) throws IOException {
+        if (p.length == 0) {
+            return writeChunkedBodyDone();
+        }
+
+        byte[] suffix = new String("\r\n" + Integer.toHexString(p.length).toUpperCase() + "\r\n").getBytes();
+        byte[] bodyChunk = BytesHelper.concatenateByteArrays(new byte[][]{p, suffix});
+
+        this.oStream.write(bodyChunk);
+        return bodyChunk.length;
+    }
+
+    public int writeChunkedBodyDone() throws IOException {
+        byte[] endChunk = new String("0\r\n\r\n").getBytes();
+        this.oStream.write(endChunk);
+        return endChunk.length;
     }
 }
