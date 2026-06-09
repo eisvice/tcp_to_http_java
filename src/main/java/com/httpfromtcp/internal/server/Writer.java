@@ -46,12 +46,9 @@ public class Writer {
     }
 
     public int writeChunkedBody(byte[] p) throws IOException {
-        if (p.length == 0) {
-            return writeChunkedBodyDone();
-        }
-
-        byte[] suffix = new String("\r\n" + Integer.toHexString(p.length).toUpperCase() + "\r\n").getBytes();
-        byte[] bodyChunk = BytesHelper.concatenateByteArrays(new byte[][]{p, suffix});
+        byte[] prefix = Integer.toHexString(p.length).toUpperCase().getBytes();
+        byte[] bodyChunk = BytesHelper.concatenateByteArrays(new byte[][]{prefix, "\r\n".getBytes(), p, "\r\n".getBytes()});
+        System.out.println(new String(bodyChunk));
 
         this.oStream.write(bodyChunk);
         return bodyChunk.length;

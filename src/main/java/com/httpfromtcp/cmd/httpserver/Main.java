@@ -1,10 +1,12 @@
 package com.httpfromtcp.cmd.httpserver;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse.BodyHandlers;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
 import com.httpfromtcp.internal.headers.Header;
@@ -42,7 +44,7 @@ public class Main {
                             writer.writeHeaders(headers);
                             writer.writeBody(responseBody);
                         }
-                        if (request.getRequestLine().getRequestTarget().equals("/myproblem")) {
+                        else if (request.getRequestLine().getRequestTarget().equals("/myproblem")) {
                             byte[] responseBody = """
 <html>
   <head>
@@ -59,20 +61,39 @@ public class Main {
                             writer.writeBody(responseBody);
                         }
 
-                        if (request.getRequestLine().getRequestTarget().contains("/httpbin/")) {
+                        else if (request.getRequestLine().getRequestTarget().contains("/httpbin/")) {
+                          Header headersChunk = new Header();
+                          headersChunk.setHeader("Content-Type", "text/plain");
+                          headersChunk.setHeader("Transfer-Encoding", "chunked");
+                          writer.writeStatusLine(StatusCode.StatusOk);
+                          writer.writeHeaders(headersChunk);
+
                           String httpbinPath = request.getRequestLine().getRequestTarget().substring("/httpbin/".length());
+
                           HttpClient client = HttpClient.newHttpClient();
                           HttpRequest proxyRequest = HttpRequest.newBuilder()
                                                   .uri(URI.create("https://httpbin.org/" + httpbinPath))
+                                                  .GET()
                                                   .build();
                           try {
-                            byte[] clientBody = client.send(proxyRequest, BodyHandlers.ofByteArray()).body();
-                            writer.writeChunkedBody(clientBody);
-                          } catch (InterruptedException e) {
-                            System.out.println(e.getMessage());
+                            HttpResponse<InputStream> response = client.send(proxyRequest, HttpResponse.BodyHandlers.ofInputStream());
+                            try (InputStream is = response.body()) {
+                                byte[] buf = new byte[256];
+                                int n;
+                                
+                                while ((n = is.read(buf)) != -1) {
+                                  writer.writeChunkedBody(Arrays.copyOfRange(buf, 0, n));
+                                }
+                            }
+                          } catch (IOException | InterruptedException e) {
+                            System.out.println("error in reading httpbin response: " + e.getMessage());
+                          } finally {
+                            writer.writeChunkedBodyDone();
                           }
-                        }
-    
+
+                        } 
+                        
+                        else {
                         byte[] responseBody = """
 <html>
   <head>
@@ -87,6 +108,7 @@ public class Main {
                         writer.writeStatusLine(StatusCode.StatusOk);
                         writer.writeHeaders(headers);
                         writer.writeBody(responseBody);
+                      }
                     } catch (IOException e) {
                         System.out.println("Error while writing a response: " + e.getMessage());
                     }
