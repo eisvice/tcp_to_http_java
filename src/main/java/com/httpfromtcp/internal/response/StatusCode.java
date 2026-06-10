@@ -2,6 +2,7 @@ package com.httpfromtcp.internal.response;
 
 public enum StatusCode {
     StatusOk(200, "OK"), 
+    StatusPartialContent(206, "Partial Content"), 
     StatusBadRequest(400, "Bad Request"), 
     StatusInternalError(500, "Internal Server Error");
 

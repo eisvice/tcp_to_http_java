@@ -6,6 +6,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
@@ -60,6 +62,19 @@ public class Main {
                             headers.setHeader("Content-Length", String.valueOf(responseBody.length));
                             writer.writeStatusLine(StatusCode.StatusInternalError);
                             writer.writeHeaders(headers);
+                            writer.writeBody(responseBody);
+                        }
+                        else if (request.getRequestLine().getRequestTarget().equals("/video")) {
+                            byte[] responseBody = Files.readAllBytes(Path.of(
+                              "/home/acevice_f/Workspace/java-projects/tcp_to_http_java/src/main/java/com/httpfromtcp/assets/vim.mp4"
+                            ));
+                            Header viedoHeaders = new Header();
+                            viedoHeaders.setHeader("Content-Type", "video/mp4");
+                            viedoHeaders.setHeader("Connection", "keep-alive");
+                            viedoHeaders.setHeader("Content-Length", String.valueOf(responseBody.length));
+                            viedoHeaders.setHeader("Accept-Ranges", "bytes");
+                            writer.writeStatusLine(StatusCode.StatusOk);
+                            writer.writeHeaders(viedoHeaders);
                             writer.writeBody(responseBody);
                         }
                         else if (request.getRequestLine().getRequestTarget().contains("/httpbin/")) {

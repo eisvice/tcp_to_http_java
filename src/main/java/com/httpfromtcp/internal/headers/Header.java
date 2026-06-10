@@ -80,6 +80,10 @@ public class Header {
         }
     }
 
+    public void replaceHeader(String fieldName, String fieldValue) {
+        this.headers.put(fieldName.toLowerCase(), fieldValue);
+    }
+
     public String getHeader(String fieldName) {
         return this.headers.get(fieldName.toLowerCase());
     }
