@@ -2,6 +2,7 @@ package com.httpfromtcp.internal.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 import com.httpfromtcp.helpers.BytesHelper;
 import com.httpfromtcp.internal.headers.Header;
@@ -46,17 +47,42 @@ public class Writer {
     }
 
     public int writeChunkedBody(byte[] p) throws IOException {
+        if (!List.of(WriterState.WriteHeaders, WriterState.WriteBody).contains(this.state)){
+            throw new IOException("Wrong order call! Expected status WriteHeaders or WriteBody. Got " + this.state);
+        }
+        this.state = WriterState.WriteBody;
+
         byte[] prefix = Integer.toHexString(p.length).toUpperCase().getBytes();
         byte[] bodyChunk = BytesHelper.concatenateByteArrays(new byte[][]{prefix, "\r\n".getBytes(), p, "\r\n".getBytes()});
-        System.out.println(new String(bodyChunk));
 
         this.oStream.write(bodyChunk);
         return bodyChunk.length;
     }
 
     public int writeChunkedBodyDone() throws IOException {
+        if (this.state != WriterState.WriteBody) {
+            throw new IOException("Wrong order call! Expected status WriteBody. Got " + this.state);
+        }
+        this.state = WriterState.Done;
+
         byte[] endChunk = new String("0\r\n\r\n").getBytes();
         this.oStream.write(endChunk);
         return endChunk.length;
+    }
+
+    public void writeTrailers(Header trailers) throws IOException {
+        if (this.state != WriterState.WriteBody) {
+            throw new IOException("Wrong order call! Expected status WriteBody. Got " + this.state);
+        }
+        this.state = WriterState.Done;
+
+        StringBuilder builder = new StringBuilder();
+        trailers.getHeaders().keySet().forEach(
+            (h) -> builder.append(String.format("%s: %s\r\n", h, trailers.getHeader(h)))
+        );
+        byte[] trailerPart = builder.toString().getBytes();
+        
+        byte[] trailerChunk = BytesHelper.concatenateByteArrays(new byte[][]{"0\r\n".getBytes(), trailerPart, "\r\n".getBytes()});
+        this.oStream.write(trailerChunk);
     }
 }

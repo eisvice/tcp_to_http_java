@@ -9,6 +9,8 @@ import java.net.http.HttpResponse;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 
+import com.google.common.hash.Hashing;
+import com.httpfromtcp.helpers.BytesHelper;
 import com.httpfromtcp.internal.headers.Header;
 import com.httpfromtcp.internal.response.StatusCode;
 import com.httpfromtcp.internal.server.Server;
@@ -60,11 +62,13 @@ public class Main {
                             writer.writeHeaders(headers);
                             writer.writeBody(responseBody);
                         }
-
                         else if (request.getRequestLine().getRequestTarget().contains("/httpbin/")) {
                           Header headersChunk = new Header();
                           headersChunk.setHeader("Content-Type", "text/plain");
                           headersChunk.setHeader("Transfer-Encoding", "chunked");
+                          headersChunk.setHeader("Trailer", "X-Content-SHA256");
+                          headersChunk.setHeader("Trailer", "X-Content-Length");
+
                           writer.writeStatusLine(StatusCode.StatusOk);
                           writer.writeHeaders(headersChunk);
 
@@ -75,6 +79,9 @@ public class Main {
                                                   .uri(URI.create("https://httpbin.org/" + httpbinPath))
                                                   .GET()
                                                   .build();
+
+                          byte[] content = new byte[]{};
+
                           try {
                             HttpResponse<InputStream> response = client.send(proxyRequest, HttpResponse.BodyHandlers.ofInputStream());
                             try (InputStream is = response.body()) {
@@ -82,13 +89,22 @@ public class Main {
                                 int n;
                                 
                                 while ((n = is.read(buf)) != -1) {
-                                  writer.writeChunkedBody(Arrays.copyOfRange(buf, 0, n));
+                                  byte[] actualRead = Arrays.copyOfRange(buf, 0, n);
+                                  content = BytesHelper.concatenateByteArrays(new byte[][] {content, actualRead});
+                                  writer.writeChunkedBody(actualRead);
                                 }
                             }
                           } catch (IOException | InterruptedException e) {
                             System.out.println("error in reading httpbin response: " + e.getMessage());
                           } finally {
-                            writer.writeChunkedBodyDone();
+                            // writer.writeChunkedBodyDone();
+                            String sha256hex = Hashing.sha256()
+                                                  .hashBytes(content)
+                                                  .toString();
+                            Header trailers = new Header();
+                            trailers.setHeader("X-Content-SHA256", sha256hex);
+                            trailers.setHeader("X-Content-Length", Integer.toString(content.length));
+                            writer.writeTrailers(trailers);
                           }
 
                         } 
