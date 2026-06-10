@@ -97,7 +97,6 @@ public class Main {
                           } catch (IOException | InterruptedException e) {
                             System.out.println("error in reading httpbin response: " + e.getMessage());
                           } finally {
-                            // writer.writeChunkedBodyDone();
                             String sha256hex = Hashing.sha256()
                                                   .hashBytes(content)
                                                   .toString();
