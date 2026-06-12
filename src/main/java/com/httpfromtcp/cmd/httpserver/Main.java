@@ -73,7 +73,7 @@ public class Main {
                             viedoHeaders.setHeader("Connection", "keep-alive");
                             viedoHeaders.setHeader("Content-Length", String.valueOf(responseBody.length));
                             viedoHeaders.setHeader("Accept-Ranges", "bytes");
-                            writer.writeStatusLine(StatusCode.StatusOk);
+                            writer.writeStatusLine(StatusCode.StatusPartialContent);
                             writer.writeHeaders(viedoHeaders);
                             writer.writeBody(responseBody);
                         }
